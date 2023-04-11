@@ -1,0 +1,12 @@
+truffle console
+
+compile
+
+migrate
+
+migrate --reset
+
+test
+
+exec scripts/issue-tokens.js
+

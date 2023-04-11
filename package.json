@@ -46,7 +46,8 @@
   ],
   "main": "truffle-config.js",
   "devDependencies": {
-    "mocha": "^10.1.0"
+    "mocha": "^10.1.0",
+    "postcss-normalize": "^10.0.1"
   },
   "license": "ISC"
 }
