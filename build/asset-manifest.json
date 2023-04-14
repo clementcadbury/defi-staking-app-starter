@@ -1,0 +1,12 @@
+{
+  "files": {
+    "main.css": "/static/css/main.448251e6.css",
+    "main.js": "/static/js/main.ea6c2d53.js",
+    "static/media/tether.png": "/static/media/tether.0a43f5e7d38f0c64b3d3.png",
+    "index.html": "/index.html"
+  },
+  "entrypoints": [
+    "static/css/main.448251e6.css",
+    "static/js/main.ea6c2d53.js"
+  ]
+}
