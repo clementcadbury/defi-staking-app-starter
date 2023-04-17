@@ -6,18 +6,32 @@ import './RWD.sol';
 import './Tether.sol';
 
 contract DecentralBank {
+
+    /* ========== STATE VARIABLES ========== */
+
     string public name = "Decentral Bank";
     address public owner;
-    Tether public tether;
-    RWD public rwd;
 
-    uint constant public rewardDivisor = 10;
+    // synthetix RewardStaking
+    // https://www.youtube.com/watch?v=pFX1-kNrJFU
+    // https://solidity-by-example.org/defi/staking-rewards/
+    // https://ethereum.stackexchange.com/questions/124024/understanding-rewardrate-and-rewardpertoken-in-synthetix-staking-contract
 
-    address[] public stakers;
+    Tether public tether; // staking token
+    RWD public rwd; // reward token
 
-    mapping(address => uint) public stakingBalance;
-    mapping(address => bool) public hasStaked;
-    mapping(address => bool) public isStaking;
+    uint public rewardRate = 10000 * 1e18 / ( 24 * uint(3600) ); // token rewardé au total par unité de temps ( la seconde ) = 10000 par jour
+    uint public lastUpdateTime; // timestamp du dernier mouvement
+    uint public rewardPerTokenStored; // somme de gauche, de 0 au dernier mouvement
+
+    mapping(address => uint) public userRewardPerTokenPaid; // somme de droite, de 0 au dernier mouvement du user
+    mapping(address => uint) public rewards; // rewards du user non réclamées jusqu'au dernier mouvement
+
+    uint public totalSupply; // total de token staké (tether)
+
+    mapping(address => uint) public balanceOf; // token tether staké par user
+
+    /* ========== CONSTRUCTOR ========== */
     
     constructor(RWD _rwd,Tether _tether) {
         owner = msg.sender;
@@ -25,50 +39,64 @@ contract DecentralBank {
         tether = _tether;
     }
 
-    function depositTokens(uint _amount) public {
+    /* ========== MODIFIERS ========== */
+
+    modifier updateReward(address _account) {
+        rewardPerTokenStored = rewardPerToken();
+        lastUpdateTime = block.timestamp;
+
+        rewards[_account] = earned(_account);
+        userRewardPerTokenPaid[_account] = rewardPerTokenStored;
+
+        _;
+    }
+
+    /* ========== VIEWS ========== */
+
+    function rewardPerToken() public view returns (uint) {
+        if (totalSupply == 0) {
+            return rewardPerTokenStored;
+        }
+
+        return rewardPerTokenStored + (
+            ( rewardRate * ( block.timestamp - lastUpdateTime ) * 1e18 ) / totalSupply // on multiplie par 1e18 pour eviter d'arrondir à 0 une trop faible valeur
+        );
+    }
+
+    function earned(address _account) public view returns (uint) {
+        return rewards[_account] + (
+            balanceOf[_account] * ( rewardPerToken() - userRewardPerTokenPaid[_account] ) / 1e18
+        );
+    }
+
+    /* ========== MUTATIVE FUNCTIONS ========== */
+
+    function stake(uint _amount) external updateReward(msg.sender) {
         require(_amount > 0,"Deposit have to be greater than 0");
         //require(tether.balanceOf(msg.sender) >= _amount,"Insufficiant funds"); // transferFrom already checks this
 
-        // transfer tether tokens to this contract address for staking
+        balanceOf[msg.sender] += _amount;
+        totalSupply += _amount;
         tether.transferFrom(msg.sender,address(this),_amount);
-        stakingBalance[msg.sender] += _amount;
 
-        if ( !hasStaked[msg.sender]) {
-            stakers.push(msg.sender);
-        }
-
-        isStaking[msg.sender] = true;
-        hasStaked[msg.sender] = true;
     }
 
-    /*function stackedTokens(address _from) public view returns(uint) {
-        return stakingBalance[_from];
-    }*/
+    function unstake() external updateReward(msg.sender) {
+        require(balanceOf[msg.sender] > 0);
 
-    // issue rewards
-    function issueTokens() public {
-        require(msg.sender == owner);
-        for( uint i = 0 ; i < stakers.length ; i++ ){
-            address recipient = stakers[i];
-            if(isStaking[recipient]){
-                uint balance = stakingBalance[recipient];
-                uint reward = balance / rewardDivisor;
-                if(balance > 0){
-                    rwd.transfer(recipient,reward);
-                }
-            }
-            
-        }
-    }
+        uint amount = balanceOf[msg.sender];
 
-    function unstakeTokens() public {
-        require(isStaking[msg.sender] == true);
-
-        uint amount = stakingBalance[msg.sender];
-        
-        isStaking[msg.sender] = false;
-        stakingBalance[msg.sender] = 0;
+        totalSupply -= amount;
+        balanceOf[msg.sender] = 0;
         tether.transfer(msg.sender,amount);
+    }
+
+    function getReward() external updateReward(msg.sender) {
+        uint reward = rewards[msg.sender];
+        if (reward > 0) {
+            rewards[msg.sender] = 0;
+            rwd.transfer(msg.sender, reward);
+        }
     }
 
 }

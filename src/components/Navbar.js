@@ -7,6 +7,7 @@ class Navbar extends Component {
     // react code goes here
     render() {
 //function Navbar(props){
+        const ownerStr = this.props.owner ? ' (owner)' : ''
         return (
             <nav className='navbar navbar-dark fixed-top shadow p-0' style={{backgroundColor:'black', height:'50px' }}>
                 <a className='navbar-brand col-sm-3 col-md-2 ms-3'
@@ -17,7 +18,7 @@ class Navbar extends Component {
                 </a>
                 <ul className='navbar-nav px-3'>
                     <li className='text-nowrap d-none nav-item d-sm-block'>
-                        <small style={{color:'white'}}>ACCOUNT NUMBER : {this.props.account}</small>
+                        <small style={{color:'white'}}>ACCOUNT NUMBER : {this.props.account}{ownerStr}</small>
                     </li>
                 </ul>
             </nav>

@@ -24,7 +24,7 @@ contract('DecentralBank', ([owner,customer]) => {
         decentralBank = await DecentralBank.new(rwd.address,tether.address);
 
         // transfer all reward tokens to decentralBank (1 million)
-        await rwd.transfer(decentralBank.address, tokens('1000000'));
+        await rwd.transfer(decentralBank.address, tokens('1000000000'));
 
         // transfer 100 Fake Tether to customer
         await tether.transfer(customer,tokens('100'),{from:owner});
@@ -54,8 +54,8 @@ contract('DecentralBank', ([owner,customer]) => {
             const ownerRwd = await rwd.balanceOf(owner);
             const customerRwd = await rwd.balanceOf(customer);
 
-            assert.equal(ownerRwd , 0 );
-            assert.equal(customerRwd , 0 );
+            assert.equal(ownerRwd , 0 , 'owner rwd balance should be 0 at this point');
+            assert.equal(customerRwd , 0 , 'customer rwd balance should be 0 at this point');
         });
     });
 
@@ -69,7 +69,7 @@ contract('DecentralBank', ([owner,customer]) => {
             const bankRwd = await rwd.balanceOf(decentralBank.address);
 
             assert.equal(bankTether , 0);
-            assert.equal(bankRwd , tokens('1000000') );
+            assert.equal(bankRwd , tokens('1000000000') );
         });
     });
 
@@ -79,16 +79,10 @@ contract('DecentralBank', ([owner,customer]) => {
             const customerAllowance = await tether.allowance(customer,decentralBank.address);
             assert.equal(customerAllowance,0,'Start allowance should be zero');
 
-            await decentralBank.depositTokens(tokens('100'),{from:customer}).should.be.rejected;
+            await decentralBank.stake(tokens('100'),{from:customer}).should.be.rejected;
 
-            const cutomerStakingBalance = await decentralBank.stakingBalance(customer);
+            const cutomerStakingBalance = await decentralBank.balanceOf(customer);
             assert.equal(cutomerStakingBalance,0,'customer staking balance should be 0 tokens');
-
-            const customerHasStacked = await decentralBank.hasStaked(customer);
-            assert.equal(customerHasStacked,false,'customer hasStaked should be false');
-
-            const customerIsStaking = await decentralBank.isStaking(customer);
-            assert.equal(customerIsStaking,false,'customer isStaking should be false');
 
         });
         it('allowance and staking',async() => {
@@ -99,8 +93,8 @@ contract('DecentralBank', ([owner,customer]) => {
             customerAllowance = await tether.allowance(customer,decentralBank.address);
             assert.equal(customerAllowance,tokens('100'),'allowance should be 100 tokens');
 
-            // call depositTokens for cutomer
-            await decentralBank.depositTokens(tokens('100'),{from:customer});
+            // call stake for cutomer
+            await decentralBank.stake(tokens('100'),{from:customer});
 
             const customerTether = await tether.balanceOf(customer);
             assert.equal(customerTether,0,'customer tether balance should be zero after deposit');
@@ -108,18 +102,12 @@ contract('DecentralBank', ([owner,customer]) => {
             const decentralBankTether = await tether.balanceOf(decentralBank.address);
             assert.equal(decentralBankTether,tokens('100'),'decentralBank tether balance should be 100 tokens');
 
-            const cutomerStakingBalance = await decentralBank.stakingBalance(customer);
+            const cutomerStakingBalance = await decentralBank.balanceOf(customer);
             assert.equal(cutomerStakingBalance,tokens('100'),'customer staking balance should be 100 tokens');
-
-            const customerHasStacked = await decentralBank.hasStaked(customer);
-            assert.equal(customerHasStacked,true,'customer hasStaked should be true');
-
-            const customerIsStaking = await decentralBank.isStaking(customer);
-            assert.equal(customerIsStaking,true,'customer isStaking should be true');
 
         });
 
-        it('reward issuing',async() => {
+        /*it('reward issuing',async() => {
 
             await decentralBank.issueTokens({from:customer}).should.be.rejected;
 
@@ -127,10 +115,10 @@ contract('DecentralBank', ([owner,customer]) => {
 
             const customerRwd = await rwd.balanceOf(customer);
             assert.equal(customerRwd , tokens('10') ,'Customer should have 10 reward tokens');
-        });
+        });*/
 
         it('unstake tether tokens',async() => {
-            await decentralBank.unstakeTokens({from: customer});
+            await decentralBank.unstake({from: customer});
 
             const customerTether = await tether.balanceOf(customer);
             assert.equal(customerTether , tokens('100'));
@@ -138,16 +126,10 @@ contract('DecentralBank', ([owner,customer]) => {
             const bankTether = await tether.balanceOf(decentralBank.address);
             assert.equal(bankTether , 0);
 
-            await decentralBank.unstakeTokens({from: customer}).should.be.rejected;
+            await decentralBank.unstake({from: customer}).should.be.rejected;
 
-            const cutomerStakingBalance = await decentralBank.stakingBalance(customer);
+            const cutomerStakingBalance = await decentralBank.balanceOf(customer);
             assert.equal(cutomerStakingBalance,0,'customer staking balance should be 0 tokens');
-
-            const customerHasStacked = await decentralBank.hasStaked(customer);
-            assert.equal(customerHasStacked,true,'customer hasStaked should be true');
-
-            const customerIsStaking = await decentralBank.isStaking(customer);
-            assert.equal(customerIsStaking,false,'customer isStaking should be false');
 
         });
     });

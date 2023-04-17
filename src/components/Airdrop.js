@@ -17,6 +17,8 @@ class Airdrop extends Component {
     componentDidMount() {
         let timeLeftVar = this.secondsToTime(this.state.seconds)
         this.setState({time: timeLeftVar})
+
+        //this.airdropReleaseToken()
     }
 
     countDown() {
@@ -65,14 +67,14 @@ class Airdrop extends Component {
     }
 
     airdropReleaseToken() {
-        let stakingBalance = this.props.stakingBalance
-        if ( stakingBalance >= '50000000000000000000') {
+        let stakingBalance = window.web3.utils.fromWei(this.props.stakingBalance,'Ether')
+        console.log(parseFloat(stakingBalance))
+        if ( parseFloat(stakingBalance) >= 50 ) {
             this.startTimer()
         }
     }
 
     render() {
-        this.airdropReleaseToken()
         return (
             <span>
                 {this.state.time.m}:{this.state.time.s}
