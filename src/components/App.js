@@ -215,7 +215,7 @@ class App extends Component {
         
         let ownerCard = this.owner ?
             <OwnerCard 
-                tether={this.state.tether }
+                tether={this.state.tether}
                 decentralBank={this.state.decentralBank}
                 rwd={this.state.rwd}
             />
@@ -224,7 +224,13 @@ class App extends Component {
 
         return (
             <div className='App' style={{position:'relative',backgroundColor:'#01113d'}}>
-                <TransferModal show={this.state.transferModal} toggleTransferModal={this.toggleTransferModal}/>
+                <TransferModal 
+                    show={this.state.transferModal} 
+                    toggleTransferModal={this.toggleTransferModal}
+                    tether={this.state.tether}
+                    tetherBalance={this.state.tetherBalance}
+                    account={this.state.account}
+                />
                 <Navbar 
                     account={this.state.account}
                     owner={this.owner}

@@ -19,7 +19,7 @@ class Navbar extends Component {
                 </a>
                 <ul className='navbar-nav px-3'>
                     <li className='text-nowrap d-none nav-item d-sm-block'>
-                        <small style={{ color: 'white' }} onClick={this.props.toggleTransferModal}>ACCOUNT NUMBER : {this.props.account}{ownerStr}</small>
+                        <small style={{ color: 'white' }} onClick={this.props.toggleTransferModal} role='button'>ACCOUNT NUMBER : {this.props.account}{ownerStr}</small>
                     </li>
                 </ul>
             </nav>

@@ -91,6 +91,7 @@ class Main extends Component {
                         let amount = this.input.value.toString()
                         amount = window.myWeb3.utils.toWei(amount,'Ether')
                         this.props.stakeTokens(amount)
+                        this.input.value = ''
                         //return false
                     }} 
                     className='mb-3'>
