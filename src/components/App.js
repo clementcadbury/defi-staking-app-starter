@@ -1,15 +1,18 @@
 import React, {Component} from 'react'
 import './App.css'
+
 import Navbar from './Navbar.js'
 import Main from './Main.js'
+import OwnerCard from './OwnerCard.js'
+import TransferModal from './TransferModal.js'
+
 import Web3 from 'web3'
 import Tether from '../truffle_abis/Tether.json'
 import RWD from '../truffle_abis/RWD.json'
 import DecentralBank from '../truffle_abis/DecentralBank.json'
-import OwnerCard from './OwnerCard.js'
+
 
 class App extends Component {
-    // react code goes here
 
     async UNSAFE_componentWillMount() {
         //await this.loadWeb3()
@@ -71,9 +74,6 @@ class App extends Component {
         if (tetherData){
             tether = new web3.eth.Contract(Tether.abi,tetherData.address)
             //this.setState({tether})
-            //let tetherBalance = await tether.methods.balanceOf(this.state.account).call()
-            //this.setState({tetherBalance: tetherBalance.toString() })
-            //console.log({tetherBalance: tetherBalance})
         } else {
             window.alert('Tether contract not found on network ' + networkId)
         }
@@ -83,9 +83,6 @@ class App extends Component {
         if (rwdData){
             rwd = new web3.eth.Contract(RWD.abi,rwdData.address)
             //this.setState({rwd})
-            //let rwdBalance = await rwd.methods.balanceOf(this.state.account).call()
-            //this.setState({rwdBalance: rwdBalance.toString() })
-            //console.log({rwdBalance: rwdBalance})
         } else {
             window.alert('Reward token RWD contract not found on network ' + networkId)
         }
@@ -99,17 +96,14 @@ class App extends Component {
                 this.owner = true
             }
             //this.setState({decentralBank})
-            //const stakingBalance = await decentralBank.methods.balanceOf(this.state.account).call()
-            //this.setState({stakingBalance: stakingBalance.toString() })
-            //console.log({stakingBalance: stakingBalance})
         } else {
             window.alert('Decentral Bank contract not found on network ' + networkId)
         }
 
-        if (decentralBankData && tetherData){
-            //const tetherAllowance = await this.state.tether.methods.allowance(this.state.account,decentralBankData.address).call()
-            //this.setState({tetherAllowance: tetherAllowance.toString() })
-        }
+        /*if (decentralBankData && tetherData){
+            const tetherAllowance = await this.state.tether.methods.allowance(this.state.account,decentralBankData.address).call()
+            this.setState({tetherAllowance: tetherAllowance.toString() })
+        }*/
 
         this.setState({
             account,
@@ -168,6 +162,17 @@ class App extends Component {
         })
     }
 
+    getReward = () => {
+        this.setState({loading: true})
+        this.state.decentralBank.methods.getReward().send({from: this.state.account}).on('transactionHash', (hash) => {
+            this.setState({loading: false})
+        })
+    }
+
+    toggleTransferModal = () => {
+        this.setState({ transferModal: !this.state.transferModal})
+    };
+
     constructor(props){
         super(props)
         this.state = {
@@ -184,7 +189,8 @@ class App extends Component {
             //rewardPerToken: '0',
             rewardRate: '0',
             totalSupply: '0',
-            loading: true
+            loading: true,
+            transferModal: false,
         }
         this.owner = false
     }
@@ -199,6 +205,7 @@ class App extends Component {
                 tetherAllowance={this.state.tetherAllowance}
                 stakeTokens={this.stakeTokens}
                 unstakeTokens={this.unstakeTokens}
+                getReward={this.getReward}
                 earned={this.state.earned}
                 earnedTime={this.state.earnedTime}
                 loading={this.state.loading}
@@ -217,9 +224,11 @@ class App extends Component {
 
         return (
             <div className='App' style={{position:'relative',backgroundColor:'#01113d'}}>
+                <TransferModal show={this.state.transferModal} toggleTransferModal={this.toggleTransferModal}/>
                 <Navbar 
                     account={this.state.account}
-                    owner={this.owner} 
+                    owner={this.owner}
+                    toggleTransferModal={this.toggleTransferModal}
                 />
                 {ownerCard}
                 <div className='container-fluid mt-5' >
