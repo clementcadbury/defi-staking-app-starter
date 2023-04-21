@@ -9,6 +9,7 @@ class Main extends Component {
         this.state = {
             earned: '0',
         }
+        this.input = React.createRef()
         this.stakeButton = React.createRef()
         this.unstakeButton = React.createRef()
         this.airdropButton = React.createRef()
@@ -45,8 +46,9 @@ class Main extends Component {
     }
 
     setButtonsStatus = () => {
-        let buttonState = this.props.loading === true
+        let buttonState = this.props.loading === true || this.props.connecting === true
         //console.log(buttonState)
+        this.input.current.disabled = buttonState
         this.stakeButton.current.disabled = buttonState
         this.unstakeButton.current.disabled = buttonState
         this.airdropButton.current.disabled = buttonState
@@ -88,10 +90,10 @@ class Main extends Component {
                     onSubmit={(event) => {
                         event.preventDefault()
                         //console.log(this)
-                        let amount = this.input.value.toString()
+                        let amount = this.input.current.value.toString()
                         amount = window.myWeb3.utils.toWei(amount,'Ether')
                         this.props.stakeTokens(amount)
-                        this.input.value = ''
+                        this.input.current.value = ''
                         //return false
                     }} 
                     className='mb-3'>
@@ -102,7 +104,7 @@ class Main extends Component {
                             </span>
                             <div className='input-group mb-2'>
                                 <input 
-                                ref={(input) => {this.input = input}}
+                                ref={this.input}
                                 type='text' 
                                 className='form-control' 
                                 placeholder='0' 

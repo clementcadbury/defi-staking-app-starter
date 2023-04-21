@@ -1,6 +1,6 @@
-import React, { Component } from 'react'
+import React, { PureComponent } from 'react'
 
-class OwnerCard extends Component {
+class OwnerCard extends PureComponent {
 
     constructor(props) {
         super(props)
