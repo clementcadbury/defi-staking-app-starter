@@ -122,7 +122,7 @@ class App extends Component {
             method: "wallet_addEthereumChain",
             params: [{
               chainId: "0x539",
-              rpcUrls: ["HTTP://127.0.0.1:7545"],
+              rpcUrls: ["HTTP://192.168.0.10:7545"],
               chainName: "Ganache local test",
               nativeCurrency: {
                 name: "ETH",
