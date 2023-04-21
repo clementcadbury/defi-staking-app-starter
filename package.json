@@ -50,5 +50,6 @@
     "mocha": "^10.1.0",
     "postcss-normalize": "^10.0.1"
   },
-  "license": "ISC"
+  "license": "ISC",
+  "homepage": "."
 }
