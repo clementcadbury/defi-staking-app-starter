@@ -5,9 +5,10 @@ import Navbar from './Navbar.js'
 import Main from './Main.js'
 import OwnerCard from './OwnerCard.js'
 import TransferModal from './TransferModal.js'
+import AppAlert from './AppAlert.js'
 
 import Web3 from 'web3'
-import Tether from '../truffle_abis/Tether.json'
+import FakeTether from '../truffle_abis/FakeTether.json'
 import RWD from '../truffle_abis/RWD.json'
 import DecentralBank from '../truffle_abis/DecentralBank.json'
 
@@ -24,7 +25,7 @@ class App extends Component {
             window.ethereum.on('chainChanged', () => {
                 console.log('*** Metamask chainChanged event')
                 this.setState({account: '0x0',loading:true})
-                this.setState({tether:{},rwd:{},decentralBank:{}})
+                this.setState({fakeTether:{},rwd:{},decentralBank:{}})
                 this.resetState()
                 this.loadWeb3()
                 //window.location.reload();
@@ -55,7 +56,7 @@ class App extends Component {
 
         if ( window.ethereum && window.ethereum.isConnected() ) {
             //await window.ethereum.enable()
-            console.log(window.ethereum)
+            //console.log(window.ethereum)
             console.log('isConnected ' + window.ethereum.isConnected())
             console.log('selectedAddress ' + window.ethereum.selectedAddress)
 
@@ -63,18 +64,25 @@ class App extends Component {
             if ( window.ethereum.selectedAddress ) {
                 console.log('Connected with ' + window.ethereum.selectedAddress)
                 await this.connectProvider(false)
-                this.setState({connecting:false})
+                //this.setState({connecting:false})
             }
             this.setState({connecting:false})
 
         } else {
-            console.log('Need metamask')
+            console.log('Need metamask 01')
+            //this.showAlertAction(true,'Need Metamask','You need metamask or another compatible browser wallet for this application to run')
             this.setState({connecting:false})
         }
     }
 
     connectProvider = async (action=true) => { // if action == true, request connection, if == false, just return
         this.setState({connecting:true})
+
+        if ( !window.ethereum) {
+            console.log('Need metamask 02')
+            this.showAlertAction(true,'Need Metamask','You need metamask or another compatible browser wallet for this application to run')
+            return
+        }
 
         const chainId = await window.ethereum.request({ method: 'eth_chainId' })
 
@@ -96,14 +104,22 @@ class App extends Component {
             if (error.code === 4001) {
                 // User rejected request
                 console.log('Error 4001 : Need to authorize Metamask to correct chain')
+                this.showAlertAction(true,'Please Autorize Metamask','You need to authorize Metamask for this application to run')
             } else if (error.code === -32603 ) {
                 // You can make a request to add the chain to wallet here
                 console.log('Chain hasn\'t been added to the wallet!')
-                await this.addChain()
+                try {
+                    await this.addChain()
+                } catch (error) {
+                    console.log('Couldnt add chain, code ' + error.code + ' : ' + error.message)
+                    this.showAlertAction(true,'Incorrect chain','Metamask needs to be on the correct chain for this application to run')
+                }
             } else {
                 console.log('Error ' + error.code)
+                this.showAlertAction(true,'Unknown error','Please make sure Metamask is installed and authorized on the right chain')
             }
         }
+
         this.setState({connecting:false})
     }
 
@@ -122,7 +138,7 @@ class App extends Component {
             method: "wallet_addEthereumChain",
             params: [{
               chainId: "0x539",
-              rpcUrls: ["HTTP://192.168.0.10:7545"],
+              rpcUrls: ["HTTP://127.0.0.1:7545"],
               chainName: "Ganache local test",
               nativeCurrency: {
                 name: "ETH",
@@ -135,7 +151,7 @@ class App extends Component {
     }
 
     async loadBlockchainData() { 
-        let tether, rwd, decentralBank
+        let fakeTether, rwd, decentralBank
         if ( !window.myWeb3 ) {
             return
         }
@@ -146,13 +162,14 @@ class App extends Component {
         const networkId = await web3.eth.net.getId()
         //console.log(networkId)
 
-        // load Tether contract
-        const tetherData = Tether.networks[networkId]
-        if (tetherData){
-            tether = new web3.eth.Contract(Tether.abi,tetherData.address)
-            //this.setState({tether})
+        // load FakeTether contract
+        const fakeTetherData = FakeTether.networks[networkId]
+        if (fakeTetherData){
+            fakeTether = new web3.eth.Contract(FakeTether.abi,fakeTetherData.address)
+            //this.setState({fakeTether})
         } else {
-            window.alert('Tether contract not found on network ' + networkId)
+            console.log('FakeTether contract not found on network ' + networkId)
+            this.showAlertAction(true,'Error finding FakeTether contract','FakeTether contract could not be found on this chain')
         }
 
         // load RWD reward token contract
@@ -161,7 +178,8 @@ class App extends Component {
             rwd = new web3.eth.Contract(RWD.abi,rwdData.address)
             //this.setState({rwd})
         } else {
-            window.alert('Reward token RWD contract not found on network ' + networkId)
+            console.log('Reward token RWD contract not found on network ' + networkId)
+            this.showAlertAction(true,'Error finding RWD contract','RWD token contract could not be found on this chain')
         }
 
         // load Decentral Bank contract
@@ -176,32 +194,40 @@ class App extends Component {
             }
             //this.setState({decentralBank})
         } else {
-            window.alert('Decentral Bank contract not found on network ' + networkId)
+            console.log('Decentral Bank contract not found on network ' + networkId)
+            this.showAlertAction(true,'Error finding DecentralBank contract','DecentralBank contract could not be found on this chain')
         }
 
-        /*if (decentralBankData && tetherData){
-            const tetherAllowance = await this.state.tether.methods.allowance(this.state.account,decentralBankData.address).call()
-            this.setState({tetherAllowance: tetherAllowance.toString() })
+        /*if (decentralBankData && fakeTetherData){
+            const fakeTetherAllowance = await this.state.fakeTether.methods.allowance(this.state.account,decentralBankData.address).call()
+            this.setState({fakeTetherAllowance: fakeTetherAllowance.toString() })
         }*/
 
         this.setState({
             account,
-            tether,
+            fakeTether,
             rwd,
             decentralBank,
         },
         async () => { 
             await this.updateBalances()
+            await this.testEvents()
             this.setState({loading: false})
         })
     }
 
+    testEvents = async () => {
+        this.state.decentralBank.getPastEvents("AirDrop",{ fromBlock:0 }).then(event => {
+            console.log(event)
+        });
+    }
+
     updateBalances = async () => {
-        if ( this.state.account !== '0x0' && this.state.tether.methods && this.state.rwd.methods && this.state.decentralBank.methods ) {
-            const tetherBalance = await this.state.tether.methods.balanceOf(this.state.account).call()
+        if ( this.state.account !== '0x0' && this.state.fakeTether.methods && this.state.rwd.methods && this.state.decentralBank.methods ) {
+            const fakeTetherBalance = await this.state.fakeTether.methods.balanceOf(this.state.account).call()
             const rwdBalance = await this.state.rwd.methods.balanceOf(this.state.account).call()
             const stakingBalance = await this.state.decentralBank.methods.balanceOf(this.state.account).call()
-            const tetherAllowance = await this.state.tether.methods.allowance(this.state.account,this.state.decentralBank._address).call()
+            const fakeTetherAllowance = await this.state.fakeTether.methods.allowance(this.state.account,this.state.decentralBank._address).call()
             const earned = await this.state.decentralBank.methods.earned(this.state.account).call()
             const rewardRate = await this.state.decentralBank.methods.rewardRate().call()
             const totalSupply = await this.state.decentralBank.methods.totalSupply().call()
@@ -210,10 +236,10 @@ class App extends Component {
             const timestamp = (await window.myWeb3.eth.getBlock(blockNumber)).timestamp
 
             this.setState({
-                tetherBalance: tetherBalance.toString(),
+                fakeTetherBalance: fakeTetherBalance.toString(),
                 rwdBalance: rwdBalance.toString(),
                 stakingBalance: stakingBalance.toString(),
-                tetherAllowance: tetherAllowance.toString(),
+                fakeTetherAllowance: fakeTetherAllowance.toString(),
                 earned: earned.toString(),
                 earnedTime: timestamp,
                 rewardRate: rewardRate.toString(),
@@ -225,7 +251,7 @@ class App extends Component {
 
     stakeTokens = (amount) => {
         this.setState({loading: true})
-        this.state.tether.methods.approve(this.state.decentralBank._address,amount).send({from: this.state.account}).on('transactionHash', (hash) => {
+        this.state.fakeTether.methods.approve(this.state.decentralBank._address,amount).send({from: this.state.account}).on('transactionHash', (hash) => {
             this.state.decentralBank.methods.stake(amount).send({from: this.state.account}).on('transactionHash', (hash) => {
                 this.setState({loading: false})
             })
@@ -246,21 +272,38 @@ class App extends Component {
         })
     }
 
+    airDrop = () => {
+        this.setState({loading: true})
+        this.state.decentralBank.methods.airDrop().send({from: this.state.account}).on('transactionHash', (hash) => {
+            this.setState({loading: false})
+        })
+    }
+
     toggleTransferModal = () => {
         this.setState({ transferModal: !this.state.transferModal})
     }
 
+    showAlertAction = (show,title='',text='') => {
+        this.setState({
+            showAlert:show,
+            alertTitle: title,
+            alertText: text,
+        })
+    }
+
     resetState() {
+        this.owner = false
         this.setState({
             account: '0x0',
-            tetherBalance: '0',
+            fakeTetherBalance: '0',
             rwdBalance: '0',
             stakingBalance: '0',
-            tetherAllowance: '0',
+            fakeTetherAllowance: '0',
             earned: '0',
             earnedTime: 0,
             rewardRate: '0',
             totalSupply: '0',
+            showAlert: false,
         })
     }
 
@@ -268,11 +311,11 @@ class App extends Component {
         super(props)
         this.state = {
             account: '0x0',
-            tether: {},
+            fakeTether: {},
             rwd: {},
             decentralBank: {},
-            tetherBalance: '0',
-            tetherAllowance: '0',
+            fakeTetherBalance: '0',
+            fakeTetherAllowance: '0',
             rwdBalance: '0',
             stakingBalance: '0',
             earned: '0',
@@ -282,6 +325,9 @@ class App extends Component {
             loading: true,
             connecting: true,
             transferModal: false,
+            showAlert: false,
+            alertTitle: '',
+            alertText: '',
         }
         this.owner = false
 
@@ -291,11 +337,11 @@ class App extends Component {
     render() {
         let content = 
             <Main 
-                tether={this.state.tether}
-                tetherBalance={this.state.tetherBalance}
+                fakeTether={this.state.fakeTether}
+                fakeTetherBalance={this.state.fakeTetherBalance}
                 rwdBalance={this.state.rwdBalance}
                 stakingBalance={this.state.stakingBalance}
-                tetherAllowance={this.state.tetherAllowance}
+                fakeTetherAllowance={this.state.fakeTetherAllowance}
                 stakeTokens={this.stakeTokens}
                 unstakeTokens={this.unstakeTokens}
                 getReward={this.getReward}
@@ -305,11 +351,12 @@ class App extends Component {
                 connecting={this.state.connecting}
                 rewardRate={this.state.rewardRate}
                 totalSupply={this.state.totalSupply}
+                airDrop={this.airDrop}
             />
         
         let ownerCard = this.owner ?
             <OwnerCard 
-                tether={this.state.tether}
+                fakeTether={this.state.fakeTether}
                 decentralBank={this.state.decentralBank}
                 rwd={this.state.rwd}
                 //account={this.state.account}
@@ -322,8 +369,8 @@ class App extends Component {
                 <TransferModal 
                     show={this.state.transferModal} 
                     toggleTransferModal={this.toggleTransferModal}
-                    tether={this.state.tether}
-                    tetherBalance={this.state.tetherBalance}
+                    fakeTether={this.state.fakeTether}
+                    fakeTetherBalance={this.state.fakeTetherBalance}
                     account={this.state.account}
                 />
                 <Navbar 
@@ -334,16 +381,19 @@ class App extends Component {
                     toggleTransferModal={this.toggleTransferModal}
                     connectProvider={this.connectProvider}
                 />
+                
                 {ownerCard}
                 <div className='container-fluid pt-5' style={{minHeight: '100vh'}} >
                     <div className='row'>
                         <main role='main' className='col-lg-12 mx-auto' style={{maxWidth:'600px'}}>
+                            
                             <div>
                                 {content}
                             </div>
                         </main>
                     </div>
                 </div>
+                <AppAlert showAlert={this.state.showAlert} showAlertAction={this.showAlertAction} alertTitle={this.state.alertTitle} alertText={this.state.alertText} />
             </div>
         )
     }

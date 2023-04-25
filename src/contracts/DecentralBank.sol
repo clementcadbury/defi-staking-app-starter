@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import './RWD.sol';
-import './Tether.sol';
+import './FakeTether.sol';
 
 contract DecentralBank {
 
@@ -17,7 +17,7 @@ contract DecentralBank {
     // https://solidity-by-example.org/defi/staking-rewards/
     // https://ethereum.stackexchange.com/questions/124024/understanding-rewardrate-and-rewardpertoken-in-synthetix-staking-contract
 
-    Tether public tether; // staking token
+    FakeTether public fakeTether; // staking token
     RWD public rwd; // reward token
 
     uint public rewardRate = 10000 * 1e18 / ( 24 * uint(3600) ); // token rewardé au total par unité de temps ( la seconde ) = 10000 par jour
@@ -27,16 +27,21 @@ contract DecentralBank {
     mapping(address => uint) public userRewardPerTokenPaid; // somme de droite, de 0 au dernier mouvement du user
     mapping(address => uint) public rewards; // rewards du user non réclamées jusqu'au dernier mouvement
 
-    uint public totalSupply; // total de token staké (tether)
+    uint public totalSupply; // total de token staké (fakeTether)
 
-    mapping(address => uint) public balanceOf; // token tether staké par user
+    mapping(address => uint) public balanceOf; // token fakeTether staké par user
+
+    event Stake(address indexed user, uint amount);
+    event Unstake(address indexed user, uint amount);
+    event GetReward(address indexed user, uint amount);
+    event AirDrop(address indexed user, uint amount);
 
     /* ========== CONSTRUCTOR ========== */
     
-    constructor(RWD _rwd,Tether _tether) {
+    constructor(RWD _rwd,FakeTether _fakeTether) {
         owner = msg.sender;
         rwd = _rwd;
-        tether = _tether;
+        fakeTether = _fakeTether;
     }
 
     /* ========== MODIFIERS ========== */
@@ -73,12 +78,12 @@ contract DecentralBank {
 
     function stake(uint _amount) external updateReward(msg.sender) {
         require(_amount > 0,"Deposit have to be greater than 0");
-        //require(tether.balanceOf(msg.sender) >= _amount,"Insufficiant funds"); // transferFrom already checks this
+        //require(fakeTether.balanceOf(msg.sender) >= _amount,"Insufficiant funds"); // transferFrom already checks this
 
         balanceOf[msg.sender] += _amount;
         totalSupply += _amount;
-        tether.transferFrom(msg.sender,address(this),_amount);
-
+        fakeTether.transferFrom(msg.sender,address(this),_amount);
+        emit Stake(msg.sender, _amount);
     }
 
     function unstake() external updateReward(msg.sender) {
@@ -88,7 +93,8 @@ contract DecentralBank {
 
         totalSupply -= amount;
         balanceOf[msg.sender] = 0;
-        tether.transfer(msg.sender,amount);
+        fakeTether.transfer(msg.sender,amount);
+        emit Unstake(msg.sender, amount);
     }
 
     function getReward() external updateReward(msg.sender) {
@@ -96,7 +102,17 @@ contract DecentralBank {
         if (reward > 0) {
             rewards[msg.sender] = 0;
             rwd.transfer(msg.sender, reward);
+            emit GetReward(msg.sender, reward);
         }
+    }
+
+    function airDrop() external {
+        uint tether = fakeTether.balanceOf(msg.sender);
+        uint staked = balanceOf[msg.sender];
+        require(tether + staked < 1000000000000000000000); // < 1000
+        uint amount = 1000000000000000000000 - ( tether + staked );
+        fakeTether.transferFrom(owner, msg.sender, amount);
+        emit AirDrop(msg.sender, amount);
     }
 
 }

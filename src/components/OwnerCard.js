@@ -5,27 +5,34 @@ class OwnerCard extends PureComponent {
     constructor(props) {
         super(props)
         this.state = {
-            tetherBalance: '0',
+            fakeTetherBalance: '0',
             rwdBalance: '0',
         }
+        this.timer = null
     }
 
     componentDidMount() {
         this.updateValues()
-        setInterval(this.updateValues,5000)
+        this.timer = setInterval(this.updateValues,5000)
     }
 
     componentDidUpdate() {
         //this.updateValues()
     }
 
+    componentWillUnmount() {
+        clearInterval(this.timer)
+        this.timer = null
+    }
+
     updateValues = async () => {
-        if (this.props.tether.methods && this.props.rwd.methods && this.props.decentralBank.methods) {
-            const tetherBalance = await this.props.tether.methods.balanceOf(this.props.decentralBank._address).call()
+        //console.log(this)
+        if ( this.props.fakeTether.methods && this.props.rwd.methods && this.props.decentralBank.methods ) {
+            const fakeTetherBalance = await this.props.fakeTether.methods.balanceOf(this.props.decentralBank._address).call()
             const rwdBalance = await this.props.rwd.methods.balanceOf(this.props.decentralBank._address).call()
 
             this.setState({
-                tetherBalance: tetherBalance.toString(),
+                fakeTetherBalance: fakeTetherBalance.toString(),
                 rwdBalance: rwdBalance.toString(),
             })
             //console.log('Balances reloaded in App')
@@ -33,10 +40,10 @@ class OwnerCard extends PureComponent {
     }
 
     render() {
-        let rwdBalance = '0', tetherBalance = '0'
+        let rwdBalance = '0', fakeTetherBalance = '0'
         if (window.myWeb3) {
             rwdBalance = window.myWeb3.utils.fromWei(this.state.rwdBalance, 'Ether')
-            tetherBalance = window.myWeb3.utils.fromWei(this.state.tetherBalance, 'Ether')
+            fakeTetherBalance = window.myWeb3.utils.fromWei(this.state.fakeTetherBalance, 'Ether')
         }
         return (
             <div className="card rounded-0" style={{
@@ -55,8 +62,8 @@ class OwnerCard extends PureComponent {
                         {this.props.decentralBank._address}
                     </p>
                     <p className="card-text">
-                        <b>contract tether balance :</b><br />
-                        {tetherBalance}
+                        <b>contract FakeTether balance :</b><br />
+                        {fakeTetherBalance}
                     </p>
                     <p className="card-text">
                         <b>contract rwd balance :</b><br />

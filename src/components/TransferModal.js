@@ -41,7 +41,7 @@ class TransferModal extends PureComponent {
         this.setState({loading: true})
         console.log(this.props.account)
         amount = window.myWeb3.utils.toWei(amount, 'Ether')
-        this.props.tether.methods.transfer(to, amount).send({ from: this.props.account }).on('transactionHash', (hash) => {
+        this.props.fakeTether.methods.transfer(to, amount).send({ from: this.props.account }).on('transactionHash', (hash) => {
             this.setState({loading: false})
         })
         //setTimeout(()=>{setLoading(false)},2000)
@@ -49,9 +49,9 @@ class TransferModal extends PureComponent {
 
     render() {
 
-        let tetherBalance = 0
+        let fakeTetherBalance = 0
         if (window.myWeb3) {
-            tetherBalance = parseFloat(window.myWeb3.utils.fromWei(this.props.tetherBalance, 'Ether')).toFixed(2)
+            fakeTetherBalance = parseFloat(window.myWeb3.utils.fromWei(this.props.fakeTetherBalance, 'Ether')).toFixed(2)
         }
 
         return (
@@ -69,7 +69,7 @@ class TransferModal extends PureComponent {
                         className='mb-3'>
                         <div style={{ borderSpacing: '0 1em' }} >
                             <span className='float-end' style={{ marginRight: '8px' }}>
-                                Balance : {tetherBalance} USDT
+                                Balance : {fakeTetherBalance} USDT
                             </span>
                             <div className='input-group mb-2'>
                                 <span className="input-group-text" id="addon-wrapping">To : </span>
