@@ -217,9 +217,9 @@ class App extends Component {
     }
 
     testEvents = async () => {
-        this.state.decentralBank.getPastEvents("AirDrop",{ fromBlock:0 }).then(event => {
+        /*this.state.decentralBank.getPastEvents("AirDrop",{ fromBlock:0 }).then(event => {
             console.log(event)
-        });
+        });*/
     }
 
     updateBalances = async () => {
@@ -251,30 +251,76 @@ class App extends Component {
 
     stakeTokens = (amount) => {
         this.setState({loading: true})
-        this.state.fakeTether.methods.approve(this.state.decentralBank._address,amount).send({from: this.state.account}).on('transactionHash', (hash) => {
-            this.state.decentralBank.methods.stake(amount).send({from: this.state.account}).on('transactionHash', (hash) => {
+        
+        this.state.fakeTether.methods.approve(this.state.decentralBank._address,amount).send({from: this.state.account})
+        .on('transactionHash', (hash) => {
+            this.state.decentralBank.methods.stake(amount).send({from: this.state.account})
+            .on('transactionHash', (hash) => {
                 this.setState({loading: false})
             })
+            .catch( (error) => {
+                if ( error.code === 4001 ) {
+                    this.showAlertAction(true,'Transaction rejected','Please accept the transaction for approval, then staking')
+                } else {
+                    this.showAlertAction(true,'Transaction rejected','Something went wrong, please try again')
+                }
+                this.setState({loading: false})
+            })
+        })
+        .catch( (error) => {
+            if ( error.code === 4001 ) {
+                this.showAlertAction(true,'Transaction rejected','Please accept the transaction for approval, then staking')
+            } else {
+                this.showAlertAction(true,'Transaction rejected','Something went wrong, please try again')
+            }
+            this.setState({loading: false})
         })
     }
 
     unstakeTokens = () => {
         this.setState({loading: true})
-        this.state.decentralBank.methods.unstake().send({from: this.state.account}).on('transactionHash', (hash) => {
+        this.state.decentralBank.methods.unstake().send({from: this.state.account})
+        .on('transactionHash', (hash) => {
+            this.setState({loading: false})
+        })
+        .catch( (error) => {
+            if ( error.code === 4001 ) {
+                this.showAlertAction(true,'Transaction rejected','Please accept the transaction for unstaking')
+            } else {
+                this.showAlertAction(true,'Transaction rejected','Something went wrong, please try again')
+            }
             this.setState({loading: false})
         })
     }
 
     getReward = () => {
         this.setState({loading: true})
-        this.state.decentralBank.methods.getReward().send({from: this.state.account}).on('transactionHash', (hash) => {
+        this.state.decentralBank.methods.getReward().send({from: this.state.account})
+        .on('transactionHash', (hash) => {
+            this.setState({loading: false})
+        })
+        .catch( (error) => {
+            if ( error.code === 4001 ) {
+                this.showAlertAction(true,'Transaction rejected','Please accept the transaction to get reward')
+            } else {
+                this.showAlertAction(true,'Transaction rejected','Something went wrong, please try again')
+            }
             this.setState({loading: false})
         })
     }
 
     airDrop = () => {
         this.setState({loading: true})
-        this.state.decentralBank.methods.airDrop().send({from: this.state.account}).on('transactionHash', (hash) => {
+        this.state.decentralBank.methods.airDrop().send({from: this.state.account})
+        .on('transactionHash', (hash) => {
+            this.setState({loading: false})
+        })
+        .catch( (error) => {
+            if ( error.code === 4001 ) {
+                this.showAlertAction(true,'Transaction rejected','Please accept the transaction to get airdrop')
+            } else {
+                this.showAlertAction(true,'Transaction rejected','Something went wrong, please try again')
+            }
             this.setState({loading: false})
         })
     }

@@ -1,0 +1,8 @@
+.navbar .sendIcon {
+    display:inline-block;
+    font-size:1rem;
+    color:#DEDEDE;
+}
+.navbar .sendIcon:hover {
+    color:#a6f11a;
+}
