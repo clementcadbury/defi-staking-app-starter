@@ -4,7 +4,7 @@
   "description": "DeFi Token Staking App",
   "author": "c-money",
   "dependencies": {
-    "@openzeppelin/contracts": "^4.8.2",
+    "@openzeppelin/contracts": "^5.2.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^22.13.9",
     "@types/react": "^19.0.8",
