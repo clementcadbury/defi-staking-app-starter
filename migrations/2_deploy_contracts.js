@@ -4,6 +4,7 @@ const DecentralBank = artifacts.require('DecentralBank');
 
 module.exports = async function(deployer,network,accounts) {
 
+    //console.log(accounts);
     const prom1 = deployer.deploy(FakeTether);
     const prom2 =  deployer.deploy(RWD);
 
